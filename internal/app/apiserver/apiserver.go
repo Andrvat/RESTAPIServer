@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"awesomeProject/internal/app/store"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -13,6 +14,7 @@ type APIServer struct {
 	config *Config
 	logger *logrus.Logger
 	router *mux.Router
+	store  *store.Store
 }
 
 func NewServer(config *Config) *APIServer {
@@ -28,6 +30,9 @@ func (receiver APIServer) Start() error {
 		return err
 	}
 	receiver.configureRouter()
+	if err := receiver.configureStore(); err != nil {
+		return err
+	}
 	receiver.logger.Info("Start API server at " + time.Now().Format(time.RFC850))
 	err := http.ListenAndServe(receiver.config.BindAddr, receiver.router)
 	return err
@@ -54,4 +59,13 @@ func (receiver APIServer) HandleHello() http.HandlerFunc {
 			log.Fatal(err)
 		}
 	}
+}
+
+func (receiver APIServer) configureStore() error {
+	st := store.NewStore(receiver.config.Store)
+	if err := st.Open(); err != nil {
+		return err
+	}
+	receiver.store = st
+	return nil
 }

@@ -1,2 +1,6 @@
 bind_addr = ":5544"
 log_level = "Info"
+
+[store]
+database-url = "host=localhost port=5432 user=andrvat password=1234 dbname=awesome_project_dev"
+database-driver-name = "postgres"
