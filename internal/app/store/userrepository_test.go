@@ -14,7 +14,7 @@ func TestUserRepository_Create(t *testing.T) {
 	user, err := s.UserRepository().Create(
 		&model.User{
 			Email:    "abc@gmail.com",
-			Password: "abc",
+			Password: model.Password{Encrypted: "abc"},
 		},
 	)
 	assert.NoError(t, err)
@@ -32,8 +32,8 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 
 	user, err = s.UserRepository().Create(
 		&model.User{
-			Email:    email,
-			Password: "abc",
+			Email:    "abc@gmail.com",
+			Password: model.Password{Encrypted: "abc"},
 		},
 	)
 	assert.NoError(t, err)

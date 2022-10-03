@@ -25,7 +25,7 @@ func NewServer(config *Config) *APIServer {
 	}
 }
 
-func (receiver APIServer) Start() error {
+func (receiver *APIServer) Start() error {
 	if err := receiver.configureLogLevel(); err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (receiver APIServer) Start() error {
 	return err
 }
 
-func (receiver APIServer) configureLogLevel() error {
+func (receiver *APIServer) configureLogLevel() error {
 	level, err := logrus.ParseLevel(receiver.config.LogLevel)
 	if err != nil {
 		return err
@@ -48,12 +48,12 @@ func (receiver APIServer) configureLogLevel() error {
 	return nil
 }
 
-func (receiver APIServer) configureRouter() {
+func (receiver *APIServer) configureRouter() {
 	receiver.router.HandleFunc("/hello", receiver.HandleHello())
 
 }
 
-func (receiver APIServer) HandleHello() http.HandlerFunc {
+func (receiver *APIServer) HandleHello() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if _, err := io.WriteString(writer, "Hello!"); err != nil {
 			log.Fatal(err)
@@ -61,7 +61,7 @@ func (receiver APIServer) HandleHello() http.HandlerFunc {
 	}
 }
 
-func (receiver APIServer) configureStore() error {
+func (receiver *APIServer) configureStore() error {
 	st := store.NewStore(receiver.config.Store)
 	if err := st.Open(); err != nil {
 		return err

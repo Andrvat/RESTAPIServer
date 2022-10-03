@@ -29,15 +29,15 @@ func (receiver *Store) Open() error {
 	return nil
 }
 
-func (receiver Store) Close() error {
+func (receiver *Store) Close() error {
 	err := receiver.db.Close()
 	return err
 }
 
-func (receiver Store) UserRepository() *UserRepository {
+func (receiver *Store) UserRepository() *UserRepository {
 	if receiver.userRepository == nil {
 		receiver.userRepository = &UserRepository{
-			store: &receiver,
+			store: receiver,
 		}
 	}
 	return receiver.userRepository
