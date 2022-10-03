@@ -25,35 +25,35 @@ func NewServer(config *Config) *APIServer {
 	}
 }
 
-func (receiver *APIServer) Start() error {
-	if err := receiver.configureLogLevel(); err != nil {
+func (s *APIServer) Start() error {
+	if err := s.configureLogLevel(); err != nil {
 		return err
 	}
-	receiver.configureRouter()
-	if err := receiver.configureStore(); err != nil {
+	s.configureRouter()
+	if err := s.configureStore(); err != nil {
 		return err
 	}
-	receiver.logger.Info("Start API server at " + time.Now().Format(time.RFC850))
-	err := http.ListenAndServe(receiver.config.BindAddr, receiver.router)
+	s.logger.Info("Start API server at " + time.Now().Format(time.RFC850))
+	err := http.ListenAndServe(s.config.BindAddr, s.router)
 	return err
 }
 
-func (receiver *APIServer) configureLogLevel() error {
-	level, err := logrus.ParseLevel(receiver.config.LogLevel)
+func (s *APIServer) configureLogLevel() error {
+	level, err := logrus.ParseLevel(s.config.LogLevel)
 	if err != nil {
 		return err
 	}
-	receiver.logger.SetLevel(level)
-	receiver.logger.Info("Set new log level: " + receiver.config.LogLevel)
+	s.logger.SetLevel(level)
+	s.logger.Info("Set new log level: " + s.config.LogLevel)
 	return nil
 }
 
-func (receiver *APIServer) configureRouter() {
-	receiver.router.HandleFunc("/hello", receiver.HandleHello())
+func (s *APIServer) configureRouter() {
+	s.router.HandleFunc("/hello", s.HandleHello())
 
 }
 
-func (receiver *APIServer) HandleHello() http.HandlerFunc {
+func (s *APIServer) HandleHello() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if _, err := io.WriteString(writer, "Hello!"); err != nil {
 			log.Fatal(err)
@@ -61,11 +61,11 @@ func (receiver *APIServer) HandleHello() http.HandlerFunc {
 	}
 }
 
-func (receiver *APIServer) configureStore() error {
-	st := store.NewStore(receiver.config.Store)
+func (s *APIServer) configureStore() error {
+	st := store.NewStore(s.config.Store)
 	if err := st.Open(); err != nil {
 		return err
 	}
-	receiver.store = st
+	s.store = st
 	return nil
 }

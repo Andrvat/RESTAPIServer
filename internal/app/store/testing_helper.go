@@ -1,6 +1,7 @@
 package store
 
 import (
+	"awesomeProject/internal/app/model"
 	"fmt"
 	"os"
 	"strings"
@@ -44,6 +45,17 @@ func TestStoreHelper(t *testing.T, readEnv bool) (*Store, func(...string)) {
 		err := store.Close()
 		if err != nil {
 			t.Fatal(err)
+		}
+	}
+}
+
+func TestUserHelper(t *testing.T) func() *model.User {
+	t.Helper()
+
+	return func() *model.User {
+		return &model.User{
+			Email:    "abc@gmail.com",
+			Password: model.Password{Original: "super1234pass"},
 		}
 	}
 }

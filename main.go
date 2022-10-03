@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	configDefaultPath string
+	serverConfigPath string
 )
 
 func init() {
-	flag.StringVar(&configDefaultPath,
+	flag.StringVar(&serverConfigPath,
 		"config-path",
 		"configs/apiserver.toml",
 		"Initialize path to config TOML file")
@@ -21,7 +21,7 @@ func init() {
 func main() {
 	flag.Parse()
 	config := apiserver.NewDefaultConfig()
-	if _, err := toml.DecodeFile(configDefaultPath, config); err != nil {
+	if _, err := toml.DecodeFile(serverConfigPath, config); err != nil {
 		log.Fatal(err)
 	}
 	server := apiserver.NewServer(config)

@@ -17,28 +17,28 @@ func NewStore(config *Config) *Store {
 	}
 }
 
-func (receiver *Store) Open() error {
-	db, err := sql.Open(receiver.config.DatabaseDriverName, receiver.config.DatabaseUrl)
+func (s *Store) Open() error {
+	db, err := sql.Open(s.config.DatabaseDriverName, s.config.DatabaseUrl)
 	if err != nil {
 		return err
 	}
 	if err := db.Ping(); err != nil {
 		return err
 	}
-	receiver.db = db
+	s.db = db
 	return nil
 }
 
-func (receiver *Store) Close() error {
-	err := receiver.db.Close()
+func (s *Store) Close() error {
+	err := s.db.Close()
 	return err
 }
 
-func (receiver *Store) UserRepository() *UserRepository {
-	if receiver.userRepository == nil {
-		receiver.userRepository = &UserRepository{
-			store: receiver,
+func (s *Store) UserRepository() *UserRepository {
+	if s.userRepository == nil {
+		s.userRepository = &UserRepository{
+			store: s,
 		}
 	}
-	return receiver.userRepository
+	return s.userRepository
 }
