@@ -1,32 +1,32 @@
-package store_test
+package teststore_test
 
 import (
 	"awesomeProject/internal/app/store"
+	"awesomeProject/internal/app/store/teststore"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestUserRepository_Create(t *testing.T) {
-	s, teardown := store.TestStoreHelper(t, false)
-	defer teardown("users")
-
+	s := teststore.NewStore()
 	userGen := store.TestUserHelper(t)
-	user, err := s.UserRepository().Create(userGen())
+	user := userGen()
+	err := s.UserRepository().Create(user)
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 }
 
 func TestUserRepository_FindByEmail(t *testing.T) {
-	s, teardown := store.TestStoreHelper(t, false)
-	defer teardown("users")
+	s := teststore.NewStore()
 
 	email := "abc@gmail.com"
 
 	user, err := s.UserRepository().FindByEmail(email)
-	assert.Error(t, err)
+	assert.EqualError(t, err, store.ErrRecordNotFound.Error())
 
 	userGen := store.TestUserHelper(t)
-	user, err = s.UserRepository().Create(userGen())
+	user = userGen()
+	err = s.UserRepository().Create(user)
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
 

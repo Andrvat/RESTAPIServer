@@ -24,8 +24,7 @@ func main() {
 	if _, err := toml.DecodeFile(serverConfigPath, config); err != nil {
 		log.Fatal(err)
 	}
-	server := apiserver.NewServer(config)
-	if err := server.Start(); err != nil {
+	if err := apiserver.Start(config); err != nil {
 		log.Fatal(err)
 	}
 }

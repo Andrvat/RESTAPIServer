@@ -1,71 +1,38 @@
 package apiserver
 
 import (
-	"awesomeProject/internal/app/store"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"io"
-	"log"
+	"awesomeProject/internal/app/store/sqlstore"
+	"database/sql"
 	"net/http"
-	"time"
 )
 
-type APIServer struct {
-	config *Config
-	logger *logrus.Logger
-	router *mux.Router
-	store  *store.Store
-}
-
-func NewServer(config *Config) *APIServer {
-	return &APIServer{
-		config: config,
-		logger: logrus.New(),
-		router: mux.NewRouter(),
-	}
-}
-
-func (s *APIServer) Start() error {
-	if err := s.configureLogLevel(); err != nil {
-		return err
-	}
-	s.configureRouter()
-	if err := s.configureStore(); err != nil {
-		return err
-	}
-	s.logger.Info("Start API server at " + time.Now().Format(time.RFC850))
-	err := http.ListenAndServe(s.config.BindAddr, s.router)
-	return err
-}
-
-func (s *APIServer) configureLogLevel() error {
-	level, err := logrus.ParseLevel(s.config.LogLevel)
+func Start(config *Config) error {
+	db, err := newDatabaseConn(config.DatabaseUrl, config.DatabaseDriverName)
 	if err != nil {
 		return err
 	}
-	s.logger.SetLevel(level)
-	s.logger.Info("Set new log level: " + s.config.LogLevel)
-	return nil
-}
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
 
-func (s *APIServer) configureRouter() {
-	s.router.HandleFunc("/hello", s.HandleHello())
-
-}
-
-func (s *APIServer) HandleHello() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		if _, err := io.WriteString(writer, "Hello!"); err != nil {
-			log.Fatal(err)
 		}
-	}
+	}(db)
+
+	store := sqlstore.NewStore(db)
+	server := NewServer(store)
+	err = http.ListenAndServe(config.BindAddr, server)
+	return err
 }
 
-func (s *APIServer) configureStore() error {
-	st := store.NewStore(s.config.Store)
-	if err := st.Open(); err != nil {
-		return err
+func newDatabaseConn(url string, driverName string) (*sql.DB, error) {
+	db, err := sql.Open(driverName, url)
+	if err != nil {
+		return nil, err
 	}
-	s.store = st
-	return nil
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
