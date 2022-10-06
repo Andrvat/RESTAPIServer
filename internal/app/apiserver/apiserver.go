@@ -3,6 +3,7 @@ package apiserver
 import (
 	"awesomeProject/internal/app/store/sqlstore"
 	"database/sql"
+	"log"
 	"net/http"
 )
 
@@ -14,7 +15,7 @@ func Start(config *Config) error {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-
+			log.Println(err)
 		}
 	}(db)
 
