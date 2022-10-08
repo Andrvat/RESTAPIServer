@@ -9,6 +9,7 @@ type Config struct {
 	LogLevel           string `toml:"log_level"`
 	DatabaseUrl        string `toml:"database_url"`
 	DatabaseDriverName string `toml:"database_driver_name"`
+	SessionKey         string `toml:"session_key"`
 }
 
 func NewConfigFromToml(path string) (*Config, error) {

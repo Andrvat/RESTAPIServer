@@ -7,14 +7,20 @@ import (
 )
 
 type Password struct {
-	Original  string
-	Encrypted string
+	Original  string `json:"original,omitempty"`
+	Encrypted string `json:"-"`
 }
 
 type User struct {
-	Id       int
-	Email    string
-	Password Password
+	Id       int       `json:"id"`
+	Email    string    `json:"email"`
+	Password *Password `json:"password,omitempty"`
+}
+
+func NewEmptyUser() *User {
+	return &User{
+		Password: &Password{},
+	}
 }
 
 func (u *User) BeforeCreate() error {
@@ -70,4 +76,13 @@ func (p Password) Validate() error {
 			validation.Length(8, 36)),
 	)
 	return err
+}
+
+func Sanitized(user *User) *User {
+	user.Password.Original = ""
+	return user
+}
+
+func (u *User) HasSamePawword(passed string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(u.Password.Encrypted), []byte(passed)) == nil
 }

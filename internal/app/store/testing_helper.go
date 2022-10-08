@@ -11,7 +11,7 @@ func TestUserHelper(t *testing.T) func() *model.User {
 	return func() *model.User {
 		return &model.User{
 			Email:    "abc@gmail.com",
-			Password: model.Password{Original: "super1234pass"},
+			Password: &model.Password{Original: "super1234pass"},
 		}
 	}
 }

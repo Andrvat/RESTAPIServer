@@ -3,6 +3,7 @@ package apiserver
 import (
 	"awesomeProject/internal/app/store/sqlstore"
 	"database/sql"
+	sessions2 "github.com/gorilla/sessions"
 	"log"
 	"net/http"
 )
@@ -20,7 +21,8 @@ func Start(config *Config) error {
 	}(db)
 
 	store := sqlstore.NewStore(db)
-	server := NewServer(store)
+	sessions := sessions2.NewCookieStore([]byte(config.SessionKey))
+	server := NewServer(store, sessions)
 	err = http.ListenAndServe(config.BindAddr, server)
 	return err
 }

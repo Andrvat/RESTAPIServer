@@ -27,7 +27,7 @@ func (r *UserRepository) Create(user *model.User) error {
 }
 
 func (r *UserRepository) FindByEmail(email string) (*model.User, error) {
-	user := &model.User{}
+	user := model.NewEmptyUser()
 	err := r.store.db.QueryRow(
 		"SELECT id, email, password FROM users WHERE email = $1",
 		email,
