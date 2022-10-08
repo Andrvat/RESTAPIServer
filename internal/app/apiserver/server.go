@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	_ "awesomeProject/docs"
 	"awesomeProject/internal/app/model"
 	"awesomeProject/internal/app/store"
 	"context"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
+	"github.com/swaggo/http-swagger"
 	"net/http"
 	"time"
 )
@@ -24,6 +26,11 @@ const (
 )
 
 type contextKey int8
+
+type SignRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
 type Server struct {
 	logger   *logrus.Logger
@@ -56,6 +63,7 @@ func (s *Server) configureRouter() {
 	privateSubRouter.Use(s.AuthenticateUser)
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
 
+	s.router.PathPrefix("/documentation").Handler(httpSwagger.WrapHandler)
 }
 
 func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
@@ -122,13 +130,20 @@ func (s *Server) handleWhoAmI() http.HandlerFunc {
 	}
 }
 
+// @Summary CreateUser
+// @Tags authentication
+// @Description Create new user and store in database
+// @ID user-create
+// @Accept json
+// @Produce json
+// @Param input body SignRequest true "Info about email and password"
+// @Success 201 {integer} 1
+// @Failure 400 {object} error
+// @Failure 422 {object} error
+// @Router /users [post]
 func (s *Server) handleUsersCreate() http.HandlerFunc {
-	type Request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
 	return func(writer http.ResponseWriter, request *http.Request) {
-		userMeta := &Request{}
+		userMeta := &SignRequest{}
 		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
 			s.handleError(writer, request, http.StatusBadRequest, err)
 			return
@@ -149,12 +164,8 @@ func (s *Server) handleUsersCreate() http.HandlerFunc {
 }
 
 func (s *Server) handleSessionsCreate() http.HandlerFunc {
-	type Request struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
 	return func(writer http.ResponseWriter, request *http.Request) {
-		userMeta := &Request{}
+		userMeta := &SignRequest{}
 		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
 			s.handleError(writer, request, http.StatusBadRequest, err)
 			return

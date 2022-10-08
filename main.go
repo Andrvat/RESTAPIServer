@@ -17,6 +17,13 @@ func init() {
 		"Initialize path to config TOML file")
 }
 
+// @title Test API server
+// @version 0.1
+// @description API Server for learning Go lang
+
+// @host localhost::5544
+// @BasePath /
+
 func main() {
 	flag.Parse()
 	config, err := apiserver.NewConfigFromToml(serverConfigPath)
