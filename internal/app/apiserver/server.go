@@ -5,12 +5,14 @@ import (
 	"awesomeProject/internal/app/store"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"time"
 )
 
 const (
@@ -44,6 +46,7 @@ func NewServer(store store.Store, sessions sessions.Store) *Server {
 
 func (s *Server) configureRouter() {
 	s.router.Use(s.SetRequestId)
+	s.router.Use(s.LogRequest)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods("POST")
@@ -86,6 +89,25 @@ func (s *Server) AuthenticateUser(nextFunc http.Handler) http.Handler {
 
 		newContext := context.WithValue(request.Context(), contextKeyUser, user)
 		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
+	})
+}
+
+func (s *Server) LogRequest(nextFunc http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		localLogger := s.logger.WithFields(logrus.Fields{
+			"remote_addr": request.RemoteAddr,
+			"request_id":  request.Context().Value(contextKeyRequestId),
+		})
+		localLogger.Infof("Started %s %s", request.Method, request.RequestURI)
+
+		startTime := time.Now()
+
+		responseWriter := &ResponseWriter{writer, http.StatusOK}
+		nextFunc.ServeHTTP(responseWriter, request)
+
+		status := fmt.Sprintf("status %s %v", http.StatusText(responseWriter.statusCode), responseWriter.statusCode)
+		localLogger.Infof("Completed in %v wtih %s", time.Now().Sub(startTime), status)
+
 	})
 }
 
