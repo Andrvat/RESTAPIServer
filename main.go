@@ -17,10 +17,9 @@ func init() {
 		"Initialize path to config TOML file")
 }
 
-// @title Test API server
-// @version 0.1
-// @description API Server for learning Go lang
-
+// @title CRUD Basic API Server
+// @version 1.0
+// @description API Server provides CRUD operations
 // @host localhost:5544
 // @BasePath /
 func main() {

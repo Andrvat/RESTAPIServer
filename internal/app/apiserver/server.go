@@ -21,8 +21,8 @@ const (
 	SessionName      = "xxx"
 	UserIdSessionKey = "user_id"
 
-	contextKeyUser contextKey = iota
-	contextKeyRequestId
+	userContextKey contextKey = iota
+	requestIdContextKey
 )
 
 type contextKey int8
@@ -67,6 +67,7 @@ func (s *Server) configureRouter() {
 	privateSubRouter.HandleFunc("/users", s.handleUsersGetAll()).Methods("GET")
 	privateSubRouter.HandleFunc("/update", s.handleUserUpdate()).Methods("POST", "PUT")
 	privateSubRouter.HandleFunc("/delete", s.handleUserDelete()).Methods("DELETE")
+	privateSubRouter.HandleFunc("/logout", s.handleSessionLogout()).Methods("PUT")
 
 }
 
@@ -74,7 +75,7 @@ func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		requestId := uuid.New().String()
 		writer.Header().Set("X-Request-ID", requestId)
-		newContext := context.WithValue(request.Context(), contextKeyRequestId, requestId)
+		newContext := context.WithValue(request.Context(), requestIdContextKey, requestId)
 		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
 	})
 }
@@ -99,7 +100,7 @@ func (s *Server) AuthenticateUser(nextFunc http.Handler) http.Handler {
 			return
 		}
 
-		newContext := context.WithValue(request.Context(), contextKeyUser, user)
+		newContext := context.WithValue(request.Context(), userContextKey, user)
 		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
 	})
 }
@@ -108,7 +109,7 @@ func (s *Server) LogRequest(nextFunc http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		localLogger := s.logger.WithFields(logrus.Fields{
 			"remote_addr": request.RemoteAddr,
-			"request_id":  request.Context().Value(contextKeyRequestId),
+			"request_id":  request.Context().Value(requestIdContextKey),
 		})
 		localLogger.Infof("Started %s %s", request.Method, request.RequestURI)
 
@@ -138,7 +139,7 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // @Router /authorized/whoami [get]
 func (s *Server) handleWhoAmI() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeUser := request.Context().Value(contextKeyUser)
+		maybeUser := request.Context().Value(userContextKey)
 		if maybeUser == nil {
 			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
 			return
@@ -223,6 +224,36 @@ func (s *Server) handleSessionCreate() http.HandlerFunc {
 	}
 }
 
+// @Summary SessionLogout
+// @Tags common
+// @Description Log out from current session after authorization
+// @ID session-logout
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 400 {object} error
+// @Failure 500 {object} error
+// @Router /authorized/logout [put]
+func (s *Server) handleSessionLogout() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		session, err := (*s.sessions).Get(request, SessionName)
+		if err != nil {
+			s.handleError(writer, request, http.StatusInternalServerError, err)
+			return
+		}
+
+		delete(session.Values, UserIdSessionKey)
+
+		err = (*s.sessions).Save(request, writer, session)
+		if err != nil {
+			s.handleError(writer, request, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.respond(writer, request, http.StatusOK, nil)
+	}
+}
+
 // @Summary GetAllUsers
 // @Tags common
 // @Description Get all existing users
@@ -257,7 +288,7 @@ func (s *Server) handleUsersGetAll() http.HandlerFunc {
 // @Router /authorized/update [put]
 func (s *Server) handleUserUpdate() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeContextUser := request.Context().Value(contextKeyUser)
+		maybeContextUser := request.Context().Value(userContextKey)
 		if maybeContextUser == nil {
 			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
 			return
@@ -313,7 +344,7 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 // @Router /authorized/delete [delete]
 func (s *Server) handleUserDelete() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeContextUser := request.Context().Value(contextKeyUser)
+		maybeContextUser := request.Context().Value(userContextKey)
 		if maybeContextUser == nil {
 			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
 			return
