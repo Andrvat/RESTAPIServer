@@ -3,5 +3,6 @@ package store
 import "errors"
 
 var (
-	ErrRecordNotFound = errors.New("error: record not found")
+	ErrRecordNotFound   = errors.New("record not found")
+	ErrDatabaseInternal = errors.New("database internal error")
 )

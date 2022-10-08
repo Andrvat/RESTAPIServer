@@ -56,3 +56,23 @@ func TestUserRepository_FindById(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, returnedUser.Id, user.Id)
 }
+
+func TestUserRepository_GetAllUsers(t *testing.T) {
+	db, teardown := sqlstore.TestDBHelper(t, false)
+	defer teardown("users")
+
+	s := sqlstore.NewStore(db)
+	userGen := store.TestUserHelper(t, 1, "abcabcabc@mail.com", "1234567890")
+	user := userGen()
+	err := s.UserRepository().Create(user)
+	assert.NoError(t, err)
+	assert.NotNil(t, user)
+
+	userGen = store.TestUserHelper(t, 2, "abcabc@mail.com", "1234567890")
+	user = userGen()
+	err = s.UserRepository().Create(user)
+
+	users, err := s.UserRepository().GetAllUsers()
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(users))
+}

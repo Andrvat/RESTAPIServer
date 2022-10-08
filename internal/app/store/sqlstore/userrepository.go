@@ -4,6 +4,7 @@ import (
 	"awesomeProject/internal/app/model"
 	"awesomeProject/internal/app/store"
 	"database/sql"
+	"log"
 )
 
 type UserRepository struct {
@@ -53,4 +54,29 @@ func (r *UserRepository) FindById(id int) (*model.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
+	rows, err := r.store.db.Query("SELECT id, email FROM users")
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Println("Query didn't close correctly")
+		}
+	}(rows)
+
+	if err != nil {
+		return nil, store.ErrRecordNotFound
+	}
+
+	var users []*model.User
+	for rows.Next() {
+		user := &model.User{}
+		err = rows.Scan(&user.Id, &user.Email)
+		if err != nil {
+			return nil, store.ErrDatabaseInternal
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }

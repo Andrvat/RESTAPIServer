@@ -5,14 +5,25 @@ import (
 	"testing"
 )
 
-func TestUserHelper(t *testing.T) func() *model.User {
+func TestUserHelper(t *testing.T, optionalUserMeta ...interface{}) func() *model.User {
 	t.Helper()
 
 	return func() *model.User {
-		return &model.User{
-			Id:       1,
-			Email:    "abc@gmail.com",
-			Password: &model.Password{Original: "super1234pass"},
+		switch len(optionalUserMeta) {
+		case 3:
+			return &model.User{
+				Id:    optionalUserMeta[0].(int),
+				Email: optionalUserMeta[1].(string),
+				Password: &model.Password{
+					Original: optionalUserMeta[2].(string),
+				},
+			}
+		default:
+			return &model.User{
+				Id:       1,
+				Email:    "abc@gmail.com",
+				Password: &model.Password{Original: "super1234pass"},
+			}
 		}
 	}
 }

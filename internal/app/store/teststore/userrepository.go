@@ -38,3 +38,12 @@ func (r *UserRepository) FindById(id int) (*model.User, error) {
 		return nil, store.ErrRecordNotFound
 	}
 }
+
+func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
+	v := make([]*model.User, 0, len(r.usersById))
+
+	for _, value := range r.usersById {
+		v = append(v, value)
+	}
+	return v, nil
+}

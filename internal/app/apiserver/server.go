@@ -62,6 +62,7 @@ func (s *Server) configureRouter() {
 	privateSubRouter := s.router.PathPrefix("/private").Subrouter()
 	privateSubRouter.Use(s.AuthenticateUser)
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
+	privateSubRouter.HandleFunc("/users", s.handleUsersGetAll()).Methods("GET")
 
 	s.router.PathPrefix("/documentation/").Handler(httpSwagger.WrapHandler)
 }
@@ -123,9 +124,23 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	s.router.ServeHTTP(writer, request)
 }
 
+// @Summary WhoAmI
+// @Tags common
+// @Description Get general info about yourself after authorization
+// @ID user-whoami
+// @Accept json
+// @Produce json
+// @Success 200 {integer} 1
+// @Failure 401 {object} error
+// @Router /private/whoami [get]
 func (s *Server) handleWhoAmI() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		user := request.Context().Value(contextKeyUser).(*model.User)
+		maybeUser := request.Context().Value(contextKeyUser)
+		if maybeUser == nil {
+			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+		user := maybeUser.(*model.User)
 		s.respond(writer, request, http.StatusOK, user)
 	}
 }
@@ -202,6 +217,26 @@ func (s *Server) handleSessionsCreate() http.HandlerFunc {
 		}
 
 		s.respond(writer, request, http.StatusOK, nil)
+	}
+}
+
+// @Summary GetAllUsers
+// @Tags common
+// @Description Get all existing users
+// @ID users-get-all
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 500 {object} error
+// @Router /private/users [get]
+func (s *Server) handleUsersGetAll() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		users, err := (*s.store).UserRepository().GetAllUsers()
+		if err != nil {
+			s.handleError(writer, request, http.StatusInternalServerError, err)
+			return
+		}
+		s.respond(writer, request, http.StatusOK, users)
 	}
 }
 
