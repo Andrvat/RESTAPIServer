@@ -270,6 +270,11 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 			return
 		}
 
+		if userMeta.Email == "" && userMeta.Password == "" {
+			s.handleError(writer, request, http.StatusBadRequest, errNonEmptyBodyRequired)
+			return
+		}
+
 		finalEmail := contextUser.Email
 		if userMeta.Email != "" {
 			finalEmail = userMeta.Email
