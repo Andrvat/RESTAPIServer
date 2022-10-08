@@ -34,3 +34,17 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, email, user.Email)
 }
+
+func TestUserRepository_FindById(t *testing.T) {
+	s := teststore.NewStore()
+
+	userGen := store.TestUserHelper(t)
+	user := userGen()
+	err := s.UserRepository().Create(user)
+	assert.NoError(t, err)
+	assert.NotNil(t, user)
+
+	returnedUser, err := s.UserRepository().FindById(user.Id)
+	assert.NoError(t, err)
+	assert.Equal(t, returnedUser.Id, user.Id)
+}

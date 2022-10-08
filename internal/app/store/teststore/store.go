@@ -16,8 +16,8 @@ func NewStore() *Store {
 func (s *Store) UserRepository() store.UserRepository {
 	if s.userRepository == nil {
 		s.userRepository = &UserRepository{
-			store: s,
-			users: make(map[string]*model.User),
+			store:     s,
+			usersById: make(map[int]*model.User),
 		}
 	}
 	return s.userRepository

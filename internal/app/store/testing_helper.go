@@ -10,6 +10,7 @@ func TestUserHelper(t *testing.T) func() *model.User {
 
 	return func() *model.User {
 		return &model.User{
+			Id:       1,
 			Email:    "abc@gmail.com",
 			Password: &model.Password{Original: "super1234pass"},
 		}
