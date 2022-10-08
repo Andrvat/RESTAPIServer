@@ -5,6 +5,8 @@ import (
 	"awesomeProject/internal/app/store"
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
@@ -16,6 +18,7 @@ const (
 	UserIdSessionKey = "user_id"
 
 	contextKeyUser contextKey = iota
+	contextKeyRequestId
 )
 
 type contextKey int8
@@ -40,6 +43,9 @@ func NewServer(store store.Store, sessions sessions.Store) *Server {
 }
 
 func (s *Server) configureRouter() {
+	s.router.Use(s.SetRequestId)
+	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
+
 	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods("POST")
 	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods("POST")
 
@@ -47,6 +53,15 @@ func (s *Server) configureRouter() {
 	privateSubRouter.Use(s.AuthenticateUser)
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
 
+}
+
+func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		requestId := uuid.New().String()
+		writer.Header().Set("X-Request-ID", requestId)
+		newContext := context.WithValue(request.Context(), contextKeyRequestId, requestId)
+		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
+	})
 }
 
 func (s *Server) AuthenticateUser(nextFunc http.Handler) http.Handler {
