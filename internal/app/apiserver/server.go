@@ -248,6 +248,7 @@ func (s *Server) handleUsersGetAll() http.HandlerFunc {
 // @ID users-update
 // @Accept json
 // @Produce json
+// @Param input body SignRequest true "New email or password"
 // @Success 200
 // @Failure 400 {object} error
 // @Failure 401 {object} error
@@ -255,13 +256,36 @@ func (s *Server) handleUsersGetAll() http.HandlerFunc {
 // @Router /authorized/update [put]
 func (s *Server) handleUserUpdate() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		// TODO: write reader json from request (see user create to help)
-		maybeUser := request.Context().Value(contextKeyUser)
-		if maybeUser == nil {
+		maybeContextUser := request.Context().Value(contextKeyUser)
+		if maybeContextUser == nil {
 			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
-		user := maybeUser.(*model.User)
+
+		contextUser := maybeContextUser.(*model.User)
+
+		userMeta := &SignRequest{}
+		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
+			s.handleError(writer, request, http.StatusBadRequest, err)
+			return
+		}
+
+		finalEmail := contextUser.Email
+		if userMeta.Email != "" {
+			finalEmail = userMeta.Email
+		}
+		finalPassword := contextUser.Password
+		if userMeta.Password != "" {
+			finalPassword = &model.Password{
+				Original: userMeta.Password,
+			}
+		}
+		user := &model.User{
+			Id:       contextUser.Id,
+			Email:    finalEmail,
+			Password: finalPassword,
+		}
+
 		err := (*s.store).UserRepository().Update(user)
 		if err != nil {
 			s.handleError(writer, request, http.StatusBadRequest, err)
