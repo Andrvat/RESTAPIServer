@@ -63,7 +63,7 @@ func (s *Server) configureRouter() {
 	privateSubRouter.Use(s.AuthenticateUser)
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
 
-	s.router.PathPrefix("/documentation").Handler(httpSwagger.WrapHandler)
+	s.router.PathPrefix("/documentation/").Handler(httpSwagger.WrapHandler)
 }
 
 func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
@@ -131,7 +131,7 @@ func (s *Server) handleWhoAmI() http.HandlerFunc {
 }
 
 // @Summary CreateUser
-// @Tags authentication
+// @Tags registration
 // @Description Create new user and store in database
 // @ID user-create
 // @Accept json
@@ -163,6 +163,18 @@ func (s *Server) handleUsersCreate() http.HandlerFunc {
 	}
 }
 
+// @Summary CreateSession
+// @Tags authentication
+// @Description Create new session for existing user
+// @ID session-create
+// @Accept json
+// @Produce json
+// @Param input body SignRequest true "Info about email and password"
+// @Success 200
+// @Failure 400 {object} error
+// @Failure 401 {object} error
+// @Failure 500 {object} error
+// @Router /sessions [post]
 func (s *Server) handleSessionsCreate() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		userMeta := &SignRequest{}

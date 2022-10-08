@@ -21,7 +21,7 @@ func init() {
 // @version 0.1
 // @description API Server for learning Go lang
 
-// @host localhost::5544
+// @host localhost:5544
 // @BasePath /
 
 func main() {
