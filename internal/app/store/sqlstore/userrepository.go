@@ -80,3 +80,15 @@ func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
 	}
 	return users, nil
 }
+
+func (r *UserRepository) Update(new *model.User) error {
+	err := new.BeforeCreate()
+	if err != nil {
+		return err
+	}
+	_, err = r.store.db.Exec("UPDATE users SET email = $2, password = $3 WHERE id = $1", new.Id, new.Email, new.Password.Encrypted)
+	if err != nil {
+		return err
+	}
+	return nil
+}

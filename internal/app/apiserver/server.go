@@ -56,15 +56,17 @@ func (s *Server) configureRouter() {
 	s.router.Use(s.LogRequest)
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
 
-	s.router.HandleFunc("/users", s.handleUsersCreate()).Methods("POST")
-	s.router.HandleFunc("/sessions", s.handleSessionsCreate()).Methods("POST")
+	s.router.PathPrefix("/documentation/").Handler(httpSwagger.WrapHandler)
 
-	privateSubRouter := s.router.PathPrefix("/private").Subrouter()
+	s.router.HandleFunc("/sign-up", s.handleUserCreate()).Methods("POST")
+	s.router.HandleFunc("/sign-in", s.handleSessionCreate()).Methods("POST")
+
+	privateSubRouter := s.router.PathPrefix("/authorized").Subrouter()
 	privateSubRouter.Use(s.AuthenticateUser)
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
 	privateSubRouter.HandleFunc("/users", s.handleUsersGetAll()).Methods("GET")
+	privateSubRouter.HandleFunc("/update", s.handleUserUpdate()).Methods("POST", "PUT")
 
-	s.router.PathPrefix("/documentation/").Handler(httpSwagger.WrapHandler)
 }
 
 func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
@@ -132,7 +134,7 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // @Produce json
 // @Success 200 {integer} 1
 // @Failure 401 {object} error
-// @Router /private/whoami [get]
+// @Router /authorized/whoami [get]
 func (s *Server) handleWhoAmI() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		maybeUser := request.Context().Value(contextKeyUser)
@@ -155,8 +157,8 @@ func (s *Server) handleWhoAmI() http.HandlerFunc {
 // @Success 201 {integer} 1
 // @Failure 400 {object} error
 // @Failure 422 {object} error
-// @Router /users [post]
-func (s *Server) handleUsersCreate() http.HandlerFunc {
+// @Router /sign-up [post]
+func (s *Server) handleUserCreate() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		userMeta := &SignRequest{}
 		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
@@ -189,8 +191,8 @@ func (s *Server) handleUsersCreate() http.HandlerFunc {
 // @Failure 400 {object} error
 // @Failure 401 {object} error
 // @Failure 500 {object} error
-// @Router /sessions [post]
-func (s *Server) handleSessionsCreate() http.HandlerFunc {
+// @Router /sign-in [post]
+func (s *Server) handleSessionCreate() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		userMeta := &SignRequest{}
 		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
@@ -228,7 +230,7 @@ func (s *Server) handleSessionsCreate() http.HandlerFunc {
 // @Produce json
 // @Success 200
 // @Failure 500 {object} error
-// @Router /private/users [get]
+// @Router /authorized/users [get]
 func (s *Server) handleUsersGetAll() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		users, err := (*s.store).UserRepository().GetAllUsers()
@@ -237,6 +239,35 @@ func (s *Server) handleUsersGetAll() http.HandlerFunc {
 			return
 		}
 		s.respond(writer, request, http.StatusOK, users)
+	}
+}
+
+// @Summary UpdateUser
+// @Tags common
+// @Description Update yourself after authorization
+// @ID users-update
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 400 {object} error
+// @Failure 401 {object} error
+// @Router /authorized/update [post]
+// @Router /authorized/update [put]
+func (s *Server) handleUserUpdate() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		// TODO: write reader json from request (see user create to help)
+		maybeUser := request.Context().Value(contextKeyUser)
+		if maybeUser == nil {
+			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+		user := maybeUser.(*model.User)
+		err := (*s.store).UserRepository().Update(user)
+		if err != nil {
+			s.handleError(writer, request, http.StatusBadRequest, err)
+			return
+		}
+		s.respond(writer, request, http.StatusOK, nil)
 	}
 }
 

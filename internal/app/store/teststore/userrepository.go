@@ -3,6 +3,7 @@ package teststore
 import (
 	"awesomeProject/internal/app/model"
 	"awesomeProject/internal/app/store"
+	"errors"
 )
 
 type UserRepository struct {
@@ -46,4 +47,14 @@ func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
 		v = append(v, value)
 	}
 	return v, nil
+}
+
+func (r *UserRepository) Update(new *model.User) error {
+	_, exist := r.usersById[new.Id]
+	if exist {
+		r.usersById[new.Id] = new
+		return nil
+	} else {
+		return errors.New("cannot update non-existing user")
+	}
 }
