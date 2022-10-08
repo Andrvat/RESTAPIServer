@@ -54,7 +54,7 @@ func TestServer_handleUsersCreate(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			request, _ := http.NewRequest(http.MethodPost, "/users", buf)
+			request, _ := http.NewRequest(http.MethodPost, "/sign-up", buf)
 			server.ServeHTTP(recorder, request)
 			assert.Equal(t, testCase.expectedHttpCode, recorder.Code)
 		})
@@ -107,7 +107,7 @@ func TestServer_handleSessionsCreate(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			request, _ := http.NewRequest(http.MethodPost, "/sessions", buf)
+			request, _ := http.NewRequest(http.MethodPost, "/sign-in", buf)
 			server.ServeHTTP(recorder, request)
 			assert.Equal(t, testCase.expectedHttpCode, recorder.Code)
 		})
@@ -116,8 +116,9 @@ func TestServer_handleSessionsCreate(t *testing.T) {
 
 func TestServer_AuthenticateUser(t *testing.T) {
 	userGen := store.TestUserHelper(t)
-	s := teststore.NewStore()
 	user := userGen()
+
+	s := teststore.NewStore()
 	err := s.UserRepository().Create(user)
 	if err != nil {
 		t.Fatal(err)

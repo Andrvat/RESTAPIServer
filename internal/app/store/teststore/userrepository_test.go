@@ -66,3 +66,19 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(users))
 }
+
+func TestUserRepository_Update(t *testing.T) {
+	s := teststore.NewStore()
+
+	userGen := store.TestUserHelper(t)
+	user := userGen()
+	err := s.UserRepository().Create(user)
+	assert.NoError(t, err)
+	assert.NotNil(t, user)
+
+	newEmail := "abababa@mail.com"
+	user.Email = newEmail
+	err = s.UserRepository().Update(user)
+	assert.NoError(t, err)
+	assert.Equal(t, newEmail, user.Email)
+}
