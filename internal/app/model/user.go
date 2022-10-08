@@ -23,7 +23,7 @@ func NewEmptyUser() *User {
 	}
 }
 
-func (u *User) BeforeCreate() error {
+func (u *User) BeforeCreateOrUpdate() error {
 	err := u.Validate()
 	if err != nil {
 		return err
@@ -83,6 +83,6 @@ func Sanitized(user *User) *User {
 	return user
 }
 
-func (u *User) HasSamePawword(passed string) bool {
+func (u *User) HasSamePassword(passed string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password.Encrypted), []byte(passed)) == nil
 }

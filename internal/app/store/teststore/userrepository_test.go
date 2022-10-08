@@ -82,3 +82,20 @@ func TestUserRepository_Update(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, newEmail, user.Email)
 }
+
+func TestUserRepository_Delete(t *testing.T) {
+	s := teststore.NewStore()
+
+	userGen := store.TestUserHelper(t)
+	user := userGen()
+	err := s.UserRepository().Create(user)
+	assert.NoError(t, err)
+	assert.NotNil(t, user)
+
+	err = s.UserRepository().Delete(user)
+	assert.NoError(t, err)
+
+	users, err := s.UserRepository().GetAllUsers()
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(users))
+}

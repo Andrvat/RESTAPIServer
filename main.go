@@ -23,7 +23,6 @@ func init() {
 
 // @host localhost:5544
 // @BasePath /
-
 func main() {
 	flag.Parse()
 	config, err := apiserver.NewConfigFromToml(serverConfigPath)

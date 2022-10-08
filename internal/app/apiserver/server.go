@@ -66,6 +66,7 @@ func (s *Server) configureRouter() {
 	privateSubRouter.HandleFunc("/whoami", s.handleWhoAmI()).Methods("GET")
 	privateSubRouter.HandleFunc("/users", s.handleUsersGetAll()).Methods("GET")
 	privateSubRouter.HandleFunc("/update", s.handleUserUpdate()).Methods("POST", "PUT")
+	privateSubRouter.HandleFunc("/delete", s.handleUserDelete()).Methods("DELETE")
 
 }
 
@@ -200,7 +201,7 @@ func (s *Server) handleSessionCreate() http.HandlerFunc {
 			return
 		}
 		user, err := (*s.store).UserRepository().FindByEmail(userMeta.Email)
-		if err != nil || !user.HasSamePawword(userMeta.Password) {
+		if err != nil || !user.HasSamePassword(userMeta.Password) {
 			s.handleError(writer, request, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}
@@ -296,6 +297,35 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 			s.handleError(writer, request, http.StatusBadRequest, err)
 			return
 		}
+		s.respond(writer, request, http.StatusOK, nil)
+	}
+}
+
+// @Summary DeleteUser
+// @Tags common
+// @Description Delete yourself after authorization
+// @ID users-delete
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 401 {object} error
+// @Failure 500 {object} error
+// @Router /authorized/delete [delete]
+func (s *Server) handleUserDelete() http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		maybeContextUser := request.Context().Value(contextKeyUser)
+		if maybeContextUser == nil {
+			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			return
+		}
+
+		contextUser := maybeContextUser.(*model.User)
+		err := (*s.store).UserRepository().Delete(contextUser)
+		if err != nil {
+			s.handleError(writer, request, http.StatusInternalServerError, err)
+			return
+		}
+
 		s.respond(writer, request, http.StatusOK, nil)
 	}
 }
