@@ -14,7 +14,7 @@ services:
     network_mode: host
     volumes:
       - /mnt/331d7bdc-0b63-46e7-9097-91b34740536d/GolandProjects/awesomeProject/migrations:/migrations
-    command: '-path /migrations -database postgres://andrvat:1234@localhost:5432/awesome?sslmode=disable down 1'
+    command: '-path /migrations -database postgres://andrvat:1234@localhost:5432/awesome?sslmode=disable up'
     depends_on:
       - postgres
 

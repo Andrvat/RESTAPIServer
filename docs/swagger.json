@@ -1,0 +1,302 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API Server provides CRUD operations",
+        "title": "CRUD Basic API Server",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:5544",
+    "basePath": "/",
+    "paths": {
+        "/authorized/delete": {
+            "delete": {
+                "description": "Delete yourself after authorization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "DeleteUser",
+                "operationId": "users-delete",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/authorized/logout": {
+            "put": {
+                "description": "Log out from current session after authorization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "SessionLogout",
+                "operationId": "session-logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/authorized/update": {
+            "put": {
+                "description": "Update yourself after authorization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "UpdateUser",
+                "operationId": "users-update",
+                "parameters": [
+                    {
+                        "description": "New email or password",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.SignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    }
+                }
+            },
+            "post": {
+                "description": "Update yourself after authorization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "UpdateUser",
+                "operationId": "users-update",
+                "parameters": [
+                    {
+                        "description": "New email or password",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.SignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/authorized/users": {
+            "get": {
+                "description": "Get all existing users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "GetAllUsers",
+                "operationId": "users-get-all",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/authorized/whoami": {
+            "get": {
+                "description": "Get general info about yourself after authorization",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "WhoAmI",
+                "operationId": "user-whoami",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/sign-in": {
+            "post": {
+                "description": "Create new session for existing user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "CreateSession",
+                "operationId": "session-create",
+                "parameters": [
+                    {
+                        "description": "Info about email and password",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.SignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/sign-up": {
+            "post": {
+                "description": "Create new user and store in database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "registration"
+                ],
+                "summary": "CreateUser",
+                "operationId": "user-create",
+                "parameters": [
+                    {
+                        "description": "Info about email and password",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apiserver.SignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {}
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apiserver.SignRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

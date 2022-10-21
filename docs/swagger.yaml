@@ -1,0 +1,205 @@
+basePath: /
+definitions:
+  apiserver.SignRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+host: localhost:5544
+info:
+  contact: {}
+  description: API Server provides CRUD operations
+  title: CRUD Basic API Server
+  version: "1.0"
+paths:
+  /authorized/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Delete yourself after authorization
+      operationId: users-delete
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: DeleteUser
+      tags:
+      - common
+  /authorized/logout:
+    put:
+      consumes:
+      - application/json
+      description: Log out from current session after authorization
+      operationId: session-logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: SessionLogout
+      tags:
+      - common
+  /authorized/update:
+    post:
+      consumes:
+      - application/json
+      description: Update yourself after authorization
+      operationId: users-update
+      parameters:
+      - description: New email or password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/apiserver.SignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+      summary: UpdateUser
+      tags:
+      - common
+    put:
+      consumes:
+      - application/json
+      description: Update yourself after authorization
+      operationId: users-update
+      parameters:
+      - description: New email or password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/apiserver.SignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+      summary: UpdateUser
+      tags:
+      - common
+  /authorized/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all existing users
+      operationId: users-get-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: GetAllUsers
+      tags:
+      - common
+  /authorized/whoami:
+    get:
+      consumes:
+      - application/json
+      description: Get general info about yourself after authorization
+      operationId: user-whoami
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "401":
+          description: Unauthorized
+          schema: {}
+      summary: WhoAmI
+      tags:
+      - common
+  /sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Create new session for existing user
+      operationId: session-create
+      parameters:
+      - description: Info about email and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/apiserver.SignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: CreateSession
+      tags:
+      - authentication
+  /sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Create new user and store in database
+      operationId: user-create
+      parameters:
+      - description: Info about email and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/apiserver.SignRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema: {}
+        "422":
+          description: Unprocessable Entity
+          schema: {}
+      summary: CreateUser
+      tags:
+      - registration
+swagger: "2.0"
