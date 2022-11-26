@@ -72,51 +72,51 @@ func (s *Server) configureRouter() {
 }
 
 func (s *Server) SetRequestId(nextFunc http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestId := uuid.New().String()
-		writer.Header().Set("X-Request-ID", requestId)
-		newContext := context.WithValue(request.Context(), requestIdContextKey, requestId)
-		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
+		w.Header().Set("X-Request-ID", requestId)
+		newContext := context.WithValue(r.Context(), requestIdContextKey, requestId)
+		nextFunc.ServeHTTP(w, r.WithContext(newContext))
 	})
 }
 
 func (s *Server) AuthenticateUser(nextFunc http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		session, err := (*s.sessions).Get(request, SessionName)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := (*s.sessions).Get(r, SessionName)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, err)
+			s.handleError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		id, exist := session.Values[UserIdSessionKey]
 		if !exist {
-			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 
 		user, err := (*s.store).UserRepository().FindById(id.(int))
 		if err != nil {
-			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 
-		newContext := context.WithValue(request.Context(), userContextKey, user)
-		nextFunc.ServeHTTP(writer, request.WithContext(newContext))
+		newContext := context.WithValue(r.Context(), userContextKey, user)
+		nextFunc.ServeHTTP(w, r.WithContext(newContext))
 	})
 }
 
 func (s *Server) LogRequest(nextFunc http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		localLogger := s.logger.WithFields(logrus.Fields{
-			"remote_addr": request.RemoteAddr,
-			"request_id":  request.Context().Value(requestIdContextKey),
+			"remote_addr": r.RemoteAddr,
+			"request_id":  r.Context().Value(requestIdContextKey),
 		})
-		localLogger.Infof("Started %s %s", request.Method, request.RequestURI)
+		localLogger.Infof("Started %s %s", r.Method, r.RequestURI)
 
 		startTime := time.Now()
 
-		responseWriter := &ResponseWriter{writer, http.StatusOK}
-		nextFunc.ServeHTTP(responseWriter, request)
+		responseWriter := &ResponseWriter{w, http.StatusOK}
+		nextFunc.ServeHTTP(responseWriter, r)
 
 		status := fmt.Sprintf("status %s %v", http.StatusText(responseWriter.statusCode), responseWriter.statusCode)
 		localLogger.Infof("Completed in %v wtih %s", time.Now().Sub(startTime), status)
@@ -124,8 +124,8 @@ func (s *Server) LogRequest(nextFunc http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	s.router.ServeHTTP(writer, request)
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
 }
 
 // @Summary WhoAmI
@@ -138,14 +138,14 @@ func (s *Server) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // @Failure 401 {object} error
 // @Router /authorized/whoami [get]
 func (s *Server) handleWhoAmI() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeUser := request.Context().Value(userContextKey)
+	return func(w http.ResponseWriter, r *http.Request) {
+		maybeUser := r.Context().Value(userContextKey)
 		if maybeUser == nil {
-			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 		user := maybeUser.(*model.User)
-		s.respond(writer, request, http.StatusOK, user)
+		s.respond(w, r, http.StatusOK, user)
 	}
 }
 
@@ -161,10 +161,10 @@ func (s *Server) handleWhoAmI() http.HandlerFunc {
 // @Failure 422 {object} error
 // @Router /sign-up [post]
 func (s *Server) handleUserCreate() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userMeta := &SignRequest{}
-		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
-			s.handleError(writer, request, http.StatusBadRequest, err)
+		if err := json.NewDecoder(r.Body).Decode(userMeta); err != nil {
+			s.handleError(w, r, http.StatusBadRequest, err)
 			return
 		}
 		user := &model.User{
@@ -175,10 +175,10 @@ func (s *Server) handleUserCreate() http.HandlerFunc {
 		}
 		err := (*s.store).UserRepository().Create(user)
 		if err != nil {
-			s.handleError(writer, request, http.StatusUnprocessableEntity, err)
+			s.handleError(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		s.respond(writer, request, http.StatusCreated, model.Sanitized(user))
+		s.respond(w, r, http.StatusCreated, model.Sanitized(user))
 	}
 }
 
@@ -195,32 +195,32 @@ func (s *Server) handleUserCreate() http.HandlerFunc {
 // @Failure 500 {object} error
 // @Router /sign-in [post]
 func (s *Server) handleSessionCreate() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		userMeta := &SignRequest{}
-		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
-			s.handleError(writer, request, http.StatusBadRequest, err)
+		if err := json.NewDecoder(r.Body).Decode(userMeta); err != nil {
+			s.handleError(w, r, http.StatusBadRequest, err)
 			return
 		}
 		user, err := (*s.store).UserRepository().FindByEmail(userMeta.Email)
 		if err != nil || !user.HasSamePassword(userMeta.Password) {
-			s.handleError(writer, request, http.StatusUnauthorized, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}
 
-		session, err := (*s.sessions).Get(request, SessionName)
+		session, err := (*s.sessions).Get(r, SessionName)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusInternalServerError, errIncorrectEmailOrPassword)
 			return
 		}
 
 		session.Values[UserIdSessionKey] = user.Id
-		err = (*s.sessions).Save(request, writer, session)
+		err = (*s.sessions).Save(r, w, session)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusInternalServerError, errIncorrectEmailOrPassword)
 			return
 		}
 
-		s.respond(writer, request, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, nil)
 	}
 }
 
@@ -235,22 +235,22 @@ func (s *Server) handleSessionCreate() http.HandlerFunc {
 // @Failure 500 {object} error
 // @Router /authorized/logout [put]
 func (s *Server) handleSessionLogout() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		session, err := (*s.sessions).Get(request, SessionName)
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := (*s.sessions).Get(r, SessionName)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, err)
+			s.handleError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
 		delete(session.Values, UserIdSessionKey)
 
-		err = (*s.sessions).Save(request, writer, session)
+		err = (*s.sessions).Save(r, w, session)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, err)
+			s.handleError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.respond(writer, request, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, nil)
 	}
 }
 
@@ -264,13 +264,13 @@ func (s *Server) handleSessionLogout() http.HandlerFunc {
 // @Failure 500 {object} error
 // @Router /authorized/users [get]
 func (s *Server) handleUsersGetAll() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		users, err := (*s.store).UserRepository().AllUsers()
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, err)
+			s.handleError(w, r, http.StatusInternalServerError, err)
 			return
 		}
-		s.respond(writer, request, http.StatusOK, users)
+		s.respond(w, r, http.StatusOK, users)
 	}
 }
 
@@ -287,23 +287,23 @@ func (s *Server) handleUsersGetAll() http.HandlerFunc {
 // @Router /authorized/update [post]
 // @Router /authorized/update [put]
 func (s *Server) handleUserUpdate() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeContextUser := request.Context().Value(userContextKey)
+	return func(w http.ResponseWriter, r *http.Request) {
+		maybeContextUser := r.Context().Value(userContextKey)
 		if maybeContextUser == nil {
-			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 
 		contextUser := maybeContextUser.(*model.User)
 
 		userMeta := &SignRequest{}
-		if err := json.NewDecoder(request.Body).Decode(userMeta); err != nil {
-			s.handleError(writer, request, http.StatusBadRequest, err)
+		if err := json.NewDecoder(r.Body).Decode(userMeta); err != nil {
+			s.handleError(w, r, http.StatusBadRequest, err)
 			return
 		}
 
 		if userMeta.Email == "" && userMeta.Password == "" {
-			s.handleError(writer, request, http.StatusBadRequest, errNonEmptyBodyRequired)
+			s.handleError(w, r, http.StatusBadRequest, errNonEmptyBodyRequired)
 			return
 		}
 
@@ -325,10 +325,10 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 
 		err := (*s.store).UserRepository().Update(user)
 		if err != nil {
-			s.handleError(writer, request, http.StatusBadRequest, err)
+			s.handleError(w, r, http.StatusBadRequest, err)
 			return
 		}
-		s.respond(writer, request, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, nil)
 	}
 }
 
@@ -343,32 +343,32 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 // @Failure 500 {object} error
 // @Router /authorized/delete [delete]
 func (s *Server) handleUserDelete() http.HandlerFunc {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		maybeContextUser := request.Context().Value(userContextKey)
+	return func(w http.ResponseWriter, r *http.Request) {
+		maybeContextUser := r.Context().Value(userContextKey)
 		if maybeContextUser == nil {
-			s.handleError(writer, request, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
 
 		contextUser := maybeContextUser.(*model.User)
 		err := (*s.store).UserRepository().Delete(contextUser)
 		if err != nil {
-			s.handleError(writer, request, http.StatusInternalServerError, err)
+			s.handleError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 
-		s.respond(writer, request, http.StatusOK, nil)
+		s.respond(w, r, http.StatusOK, nil)
 	}
 }
 
-func (s *Server) handleError(writer http.ResponseWriter, request *http.Request, status int, err error) {
-	s.respond(writer, request, status, map[string]string{"error": err.Error()})
+func (s *Server) handleError(w http.ResponseWriter, r *http.Request, status int, err error) {
+	s.respond(w, r, status, map[string]string{"error": err.Error()})
 }
 
-func (s *Server) respond(writer http.ResponseWriter, request *http.Request, status int, data interface{}) {
-	writer.WriteHeader(status)
+func (s *Server) respond(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
+	w.WriteHeader(status)
 	if data != nil {
-		err := json.NewEncoder(writer).Encode(data)
+		err := json.NewEncoder(w).Encode(data)
 		if err != nil {
 			return
 		}

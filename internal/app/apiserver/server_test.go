@@ -147,8 +147,8 @@ func TestServer_AuthenticateUser(t *testing.T) {
 	server := apiserver.NewServer(s, sessions2.NewCookieStore([]byte(secretKey)))
 	secureCookie := securecookie.New([]byte(secretKey), nil)
 
-	fakeHandler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusOK)
+	fakeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
 		return
 	})
 
