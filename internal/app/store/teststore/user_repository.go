@@ -40,7 +40,7 @@ func (r *UserRepository) FindById(id int) (*model.User, error) {
 	}
 }
 
-func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
+func (r *UserRepository) AllUsers() ([]*model.User, error) {
 	v := make([]*model.User, 0, len(r.usersById))
 
 	for _, value := range r.usersById {

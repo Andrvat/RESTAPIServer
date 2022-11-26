@@ -254,7 +254,7 @@ func (s *Server) handleSessionLogout() http.HandlerFunc {
 	}
 }
 
-// @Summary GetAllUsers
+// @Summary AllUsers
 // @Tags common
 // @Description Get all existing users
 // @ID users-get-all
@@ -265,7 +265,7 @@ func (s *Server) handleSessionLogout() http.HandlerFunc {
 // @Router /authorized/users [get]
 func (s *Server) handleUsersGetAll() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		users, err := (*s.store).UserRepository().GetAllUsers()
+		users, err := (*s.store).UserRepository().AllUsers()
 		if err != nil {
 			s.handleError(writer, request, http.StatusInternalServerError, err)
 			return

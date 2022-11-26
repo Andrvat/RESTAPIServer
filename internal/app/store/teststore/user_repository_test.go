@@ -49,7 +49,7 @@ func TestUserRepository_FindById(t *testing.T) {
 	assert.Equal(t, returnedUser.Id, user.Id)
 }
 
-func TestUserRepository_GetAllUsers(t *testing.T) {
+func TestUserRepository_AllUsers(t *testing.T) {
 	s := teststore.NewStore()
 
 	userGen := store.TestUserHelper(t, 1, "abcabcabc@mail.com", "1234567890")
@@ -62,7 +62,7 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 	user = userGen()
 	err = s.UserRepository().Create(user)
 
-	users, err := s.UserRepository().GetAllUsers()
+	users, err := s.UserRepository().AllUsers()
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(users))
 }
@@ -95,7 +95,7 @@ func TestUserRepository_Delete(t *testing.T) {
 	err = s.UserRepository().Delete(user)
 	assert.NoError(t, err)
 
-	users, err := s.UserRepository().GetAllUsers()
+	users, err := s.UserRepository().AllUsers()
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(users))
 }

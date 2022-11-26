@@ -164,7 +164,7 @@ const docTemplate = `{
                 "tags": [
                     "common"
                 ],
-                "summary": "GetAllUsers",
+                "summary": "AllUsers",
                 "operationId": "users-get-all",
                 "responses": {
                     "200": {

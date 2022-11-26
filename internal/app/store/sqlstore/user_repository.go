@@ -56,7 +56,7 @@ func (r *UserRepository) FindById(id int) (*model.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetAllUsers() ([]*model.User, error) {
+func (r *UserRepository) AllUsers() ([]*model.User, error) {
 	rows, err := r.store.db.Query("SELECT id, email FROM users")
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
