@@ -90,13 +90,13 @@ func (s *Server) AuthenticateUser(nextFunc http.Handler) http.Handler {
 
 		id, exist := session.Values[UserIdSessionKey]
 		if !exist {
-			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
 			return
 		}
 
 		user, err := (*s.store).UserRepository().FindById(id.(int))
 		if err != nil {
-			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
 			return
 		}
 
@@ -141,7 +141,7 @@ func (s *Server) handleWhoAmI() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		maybeUser := r.Context().Value(userContextKey)
 		if maybeUser == nil {
-			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
 			return
 		}
 		user := maybeUser.(*model.User)
@@ -203,20 +203,20 @@ func (s *Server) handleSessionCreate() http.HandlerFunc {
 		}
 		user, err := (*s.store).UserRepository().FindByEmail(userMeta.Email)
 		if err != nil || !user.HasSamePassword(userMeta.Password) {
-			s.handleError(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusUnauthorized, ErrIncorrectEmailOrPassword)
 			return
 		}
 
 		session, err := (*s.sessions).Get(r, SessionName)
 		if err != nil {
-			s.handleError(w, r, http.StatusInternalServerError, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusInternalServerError, ErrIncorrectEmailOrPassword)
 			return
 		}
 
 		session.Values[UserIdSessionKey] = user.Id
 		err = (*s.sessions).Save(r, w, session)
 		if err != nil {
-			s.handleError(w, r, http.StatusInternalServerError, errIncorrectEmailOrPassword)
+			s.handleError(w, r, http.StatusInternalServerError, ErrIncorrectEmailOrPassword)
 			return
 		}
 
@@ -290,7 +290,7 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		maybeContextUser := r.Context().Value(userContextKey)
 		if maybeContextUser == nil {
-			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
 			return
 		}
 
@@ -303,7 +303,7 @@ func (s *Server) handleUserUpdate() http.HandlerFunc {
 		}
 
 		if userMeta.Email == "" && userMeta.Password == "" {
-			s.handleError(w, r, http.StatusBadRequest, errNonEmptyBodyRequired)
+			s.handleError(w, r, http.StatusBadRequest, ErrNonEmptyBodyRequired)
 			return
 		}
 
@@ -346,7 +346,7 @@ func (s *Server) handleUserDelete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		maybeContextUser := r.Context().Value(userContextKey)
 		if maybeContextUser == nil {
-			s.handleError(w, r, http.StatusUnauthorized, errNotAuthenticated)
+			s.handleError(w, r, http.StatusUnauthorized, ErrNotAuthenticated)
 			return
 		}
 
